@@ -172,7 +172,10 @@ defmodule Dlex.Node do
     }
   end
 
+  defp atom_to_string(:relation), do: "uid"
+  defp atom_to_string(:relations), do: "[uid]"
   defp atom_to_string([:uid]), do: "[uid]"
+  defp atom_to_string(:lang), do: "string"
   defp atom_to_string(atom), do: atom |> Atom.to_string()
 
   @doc false
@@ -189,6 +192,7 @@ defmodule Dlex.Node do
   defp ecto_type(:datetime), do: :utc_datetime
   defp ecto_type(:relation), do: :map
   defp ecto_type(:relations), do: {:array, :map}
+  defp ecto_type(:lang), do: {:array, :map}
   defp ecto_type(type), do: type
 
   defmacro field(name, type, opts \\ []) do
@@ -213,13 +217,25 @@ defmodule Dlex.Node do
   @doc false
   def __field__(module, name, type, opts, depends_on) do
     schema_name = Module.get_attribute(module, :name)
-    Module.put_attribute(module, :fields_struct, {name, opts[:default]})
+
+    if Keyword.get(opts, :lang, false) do
+      Module.put_attribute(module, :fields_struct, {name, []})
+    else
+      Module.put_attribute(module, :fields_struct, {name, opts[:default]})
+    end
 
     unless opts[:virtual] do
       Module.put_attribute(module, :fields, name)
 
       {db_name, type, alter} = db_field(name, type, opts, schema_name, module, depends_on)
-      field = %Field{name: name, type: type, db_name: db_name, alter: alter, opts: opts}
+
+      field =
+        if Keyword.get(opts, :lang, false) do
+          %Field{name: name, type: :lang, db_name: db_name, alter: alter, opts: opts}
+        else
+          %Field{name: name, type: type, db_name: db_name, alter: alter, opts: opts}
+        end
+
       Module.put_attribute(module, :fields_data, field)
     end
   end
@@ -265,6 +281,7 @@ defmodule Dlex.Node do
     geo: "geo",
     datetime: "datetime",
     uid: "uid",
+    lang: "string",
     relation: "uid",
     relations: "[uid]"
   ]
@@ -275,7 +292,7 @@ defmodule Dlex.Node do
 
   defp db_type([:uid]), do: "[uid]"
 
-  @ignore_keys [:default, :depends_on]
+  @ignore_keys [:default, :depends_on, :model, :models]
   defp gen_opt({key, _value}, _type) when key in @ignore_keys, do: []
   defp gen_opt({:index, true}, type), do: [{"index", true}, {"tokenizer", [db_type(type)]}]
 

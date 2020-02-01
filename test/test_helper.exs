@@ -19,12 +19,13 @@ defmodule Dlex.Team do
 
   schema "team" do
     field :name, :string, index: ["term"]
+    field :text, :string, lang: true
     relation(:members, :many, models: [Dlex.User])
   end
 
   def changeset(team, params \\ %{}) do
     team
-    |> cast(params, [:name, :members])
+    |> cast(params, [:name, :members, :text])
     |> validate_relation(:members)
   end
 end
@@ -54,8 +55,8 @@ defmodule Dlex.TestHelper do
 
   def opts() do
     case @dlex_adapter do
-      :http -> [transport: :http, port: 8090]
-      :grpc -> [transport: :grpc, port: 9090]
+      :http -> [transport: :http, port: 8080]
+      :grpc -> [transport: :grpc, port: 9080]
     end
   end
 
