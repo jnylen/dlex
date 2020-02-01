@@ -263,13 +263,20 @@ defmodule Dlex.Repo do
 
   defp do_decode_map(map, type, lookup, strict?) when is_map(map) and is_atom(type) do
     Enum.reduce(map, type.__struct__(), fn {key, value}, struct ->
-      do_decode_field(struct, field(type, key), value, lookup, strict?)
+      do_decode_field(
+        struct,
+        lang?(String.split(key, "@"), key, type),
+        value,
+        lookup,
+        strict?
+      )
     end)
   end
 
-  defp do_decode_field(struct, {field_name, :lang}, value, _lookup, _strict?) do
-    [key, lang] = String.split(field_name, "@")
+  defp lang?([key, lang], _original, type), do: {field(type, key), lang}
+  defp lang?(_, original, type), do: field(type, original)
 
+  defp do_decode_field(struct, {{key, _}, lang}, value, _lookup, _strict?) do
     case Ecto.Type.cast(:string, value) do
       {:ok, casted_value} ->
         merge_list(

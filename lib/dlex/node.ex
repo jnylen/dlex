@@ -197,17 +197,7 @@ defmodule Dlex.Node do
 
   defmacro field(name, type, opts \\ []) do
     quote do
-      if Keyword.get(unquote(opts), :lang, false) do
-        Dlex.Node.__field__(
-          __MODULE__,
-          unquote(name),
-          :lang,
-          unquote(opts) |> Keyword.put(:default, []),
-          @depends_on
-        )
-      else
-        Dlex.Node.__field__(__MODULE__, unquote(name), unquote(type), unquote(opts), @depends_on)
-      end
+      Dlex.Node.__field__(__MODULE__, unquote(name), unquote(type), unquote(opts), @depends_on)
     end
   end
 
@@ -302,7 +292,7 @@ defmodule Dlex.Node do
 
   defp db_type([:uid]), do: "[uid]"
 
-  @ignore_keys [:default, :depends_on]
+  @ignore_keys [:default, :depends_on, :model, :models]
   defp gen_opt({key, _value}, _type) when key in @ignore_keys, do: []
   defp gen_opt({:index, true}, type), do: [{"index", true}, {"tokenizer", [db_type(type)]}]
 

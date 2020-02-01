@@ -59,7 +59,9 @@ defmodule Dlex.Type.Mutation do
   defp infer_type(_), do: :nquads
 
   defp format(:nquads, statement, _), do: statement
-  defp format(:json, statement, json_lib), do: json_lib.encode!(statement)
+
+  defp format(:json, statement, json_lib),
+    do: json_lib.encode!(statement)
 
   defp mutation_key(:json, nil), do: :set_json
   defp mutation_key(:cond, nil), do: :cond
