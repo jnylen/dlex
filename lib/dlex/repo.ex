@@ -141,14 +141,33 @@ defmodule Dlex.Repo do
 
   defp encode_kv({key, value}, struct) do
     case field(struct, key) do
-      nil -> []
-      string_key -> [{string_key, encode(value)}]
+      nil ->
+        []
+
+      string_key ->
+        case type(struct, key) do
+          :lang ->
+            value |> from_lang(string_key)
+
+          _ ->
+            [{string_key, encode(value)}]
+        end
     end
+  end
+
+  defp from_lang(list, key) when is_list(list),
+    do: list |> Enum.map(&from_lang(&1, key)) |> List.flatten()
+
+  defp from_lang(%Dlex.Lang{language: language, value: value}, key)
+       when is_bitstring(value) and is_bitstring(language) do
+    [{"#{key}@#{language}", value}]
   end
 
   @compile {:inline, field: 2}
   def field(_struct, "uid"), do: {:uid, :string}
   def field(struct, key), do: struct.__schema__(:field, key)
+  @compile {:inline, type: 2}
+  def type(struct, key), do: struct.__schema__(:type, key)
   @compile {:inline, source: 1}
   def source(struct), do: struct.__schema__(:source)
 
@@ -213,6 +232,22 @@ defmodule Dlex.Repo do
     end)
   end
 
+  defp do_decode_field(struct, {field_name, :lang}, value, _lookup, _strict?) do
+    [key, lang] = String.split(field_name, "@")
+
+    case Ecto.Type.cast(:string, value) do
+      {:ok, casted_value} ->
+        merge_list(
+          struct,
+          key,
+          casted_value |> into_lang_struct(lang)
+        )
+
+      {:error, error} ->
+        throw({:error, error})
+    end
+  end
+
   defp do_decode_field(struct, {field_name, field_type}, value, lookup, strict?) do
     case Ecto.Type.cast(field_type, value) do
       {:ok, casted_value} -> Map.put(struct, field_name, do_decode(casted_value, lookup, strict?))
@@ -221,6 +256,13 @@ defmodule Dlex.Repo do
   end
 
   defp do_decode_field(struct, nil, _value, _lookup, _strict?), do: struct
+
+  defp into_lang_struct(value, language), do: %Dlex.Lang{language: language, value: value}
+
+  defp merge_list(map, key, add) do
+    map
+    |> Map.put(key, [add | Map.get(map, key, [])] |> Enum.uniq())
+  end
 
   def get_by(conn, field, name) do
     statement = "query all($a: string) {all(func: eq(#{field}, $a)) {uid expand(_all_)}}"

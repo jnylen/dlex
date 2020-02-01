@@ -179,7 +179,17 @@ defmodule Dlex.Node do
 
   defmacro field(name, type, opts \\ []) do
     quote do
-      Dlex.Node.__field__(__MODULE__, unquote(name), unquote(type), unquote(opts), @depends_on)
+      if Keyword.get(unquote(opts), :lang, false) do
+        Dlex.Node.__field__(
+          __MODULE__,
+          unquote(name),
+          :lang,
+          unquote(opts) |> Keyword.put(:default, []),
+          @depends_on
+        )
+      else
+        Dlex.Node.__field__(__MODULE__, unquote(name), unquote(type), unquote(opts), @depends_on)
+      end
     end
   end
 
@@ -237,7 +247,8 @@ defmodule Dlex.Node do
     string: "string",
     geo: "geo",
     datetime: "datetime",
-    uid: "uid"
+    uid: "uid",
+    lang: "string"
   ]
 
   for {type, dgraph_type} <- @types_mapping do
