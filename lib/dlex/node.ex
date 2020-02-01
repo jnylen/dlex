@@ -265,6 +265,7 @@ defmodule Dlex.Node do
     geo: "geo",
     datetime: "datetime",
     uid: "uid",
+    lang: "string",
     relation: "uid",
     relations: "[uid]"
   ]
@@ -275,7 +276,7 @@ defmodule Dlex.Node do
 
   defp db_type([:uid]), do: "[uid]"
 
-  @ignore_keys [:default, :depends_on]
+  @ignore_keys [:default, :depends_on, :model, :models]
   defp gen_opt({key, _value}, _type) when key in @ignore_keys, do: []
   defp gen_opt({:index, true}, type), do: [{"index", true}, {"tokenizer", [db_type(type)]}]
 
