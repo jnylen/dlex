@@ -54,8 +54,8 @@ defmodule Dlex.TestHelper do
 
   def opts() do
     case @dlex_adapter do
-      :http -> [transport: :http, port: 8090]
-      :grpc -> [transport: :grpc, port: 9090]
+      :http -> [transport: :http, port: 8080]
+      :grpc -> [transport: :grpc, port: 9080]
     end
   end
 
