@@ -10,19 +10,19 @@ defmodule DlexTest do
 
     schema = """
       type Client {
-        name
-        email
-        balance
+        name: string
+        email: string
+        balance: float
       }
 
       type CastMember {
-        name
-        surname
+        name: string
+        surname: string
       }
 
       type Film {
-        name
-        release_date
+        name: string
+        release_date: string
         starring: [CastMember]
       }
 
