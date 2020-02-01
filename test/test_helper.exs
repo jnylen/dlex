@@ -3,6 +3,7 @@ ExUnit.start()
 
 defmodule Dlex.User do
   use Dlex.Node
+  use Dlex.Changeset
 
   schema "user" do
     field :name, :string, index: ["term"]
@@ -12,8 +13,41 @@ defmodule Dlex.User do
   end
 end
 
+defmodule Dlex.Team do
+  use Dlex.Node
+  use Dlex.Changeset
+
+  schema "team" do
+    field :name, :string, index: ["term"]
+    field :text, :string, lang: true
+    relation(:members, :many, models: [Dlex.User])
+  end
+
+  def changeset(team, params \\ %{}) do
+    team
+    |> cast(params, [:name, :members, :text])
+    |> validate_relation(:members)
+  end
+end
+
+defmodule Dlex.Ball do
+  use Dlex.Node
+  use Dlex.Changeset
+
+  schema "ball" do
+    field :color, :string, index: ["term"]
+    relation(:owner, :one, models: [Dlex.User], reverse: true)
+  end
+
+  def changeset(ball, params \\ %{}) do
+    ball
+    |> cast(params, [:color, :owner])
+    |> validate_relation(:owner)
+  end
+end
+
 defmodule Dlex.TestRepo do
-  use Dlex.Repo, otp_app: :dlex, modules: [Dlex.User]
+  use Dlex.Repo, otp_app: :dlex, modules: [Dlex.User, Dlex.Team, Dlex.Ball]
 end
 
 defmodule Dlex.TestHelper do

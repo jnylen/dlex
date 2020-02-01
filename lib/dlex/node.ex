@@ -125,12 +125,19 @@ defmodule Dlex.Node do
         def __schema__(:type, unquote(name)), do: unquote(type)
       end
 
-      for %Dlex.Field{name: name, db_name: db_name, type: type} <- @fields_data do
+      for %Dlex.Field{name: name, db_name: db_name, type: type, opts: opts} <- @fields_data do
         def __schema__(:field, unquote(name)), do: unquote(db_name)
         def __schema__(:field, unquote(db_name)), do: {unquote(name), unquote(type)}
+
+        def __schema__(:models, unquote(name)),
+          do: Keyword.get(unquote(opts), :models, [])
+
+        def __schema__(:models, unquote(db_name)),
+          do: Keyword.get(unquote(opts), :models, [])
       end
 
       def __schema__(:field, _), do: nil
+      def __schema__(:models, _), do: []
 
       changeset = Dlex.Node.__gen_changeset__(@fields_data)
       def __changeset__(), do: unquote(Macro.escape(changeset))
@@ -148,12 +155,7 @@ defmodule Dlex.Node do
     type_fields =
       module
       |> Module.get_attribute(:fields_data)
-      |> Enum.map(fn fdata ->
-        %{
-          "name" => fdata.db_name,
-          "type" => Atom.to_string(fdata.type)
-        }
-      end)
+      |> Enum.map(&into_type_field/1)
 
     type = %{"name" => source, "fields" => type_fields}
 
@@ -162,6 +164,19 @@ defmodule Dlex.Node do
       "schema" => preds
     }
   end
+
+  defp into_type_field(%{db_name: name, type: type}) do
+    %{
+      "name" => name,
+      "type" => atom_to_string(type)
+    }
+  end
+
+  defp atom_to_string(:relation), do: "uid"
+  defp atom_to_string(:relations), do: "[uid]"
+  defp atom_to_string([:uid]), do: "[uid]"
+  defp atom_to_string(:lang), do: "string"
+  defp atom_to_string(atom), do: atom |> Atom.to_string()
 
   @doc false
   def __depends_on_modules__(module) do
@@ -175,6 +190,9 @@ defmodule Dlex.Node do
   end
 
   defp ecto_type(:datetime), do: :utc_datetime
+  defp ecto_type(:relation), do: :map
+  defp ecto_type(:relations), do: {:array, :map}
+  defp ecto_type(:lang), do: {:array, :map}
   defp ecto_type(type), do: type
 
   defmacro field(name, type, opts \\ []) do
@@ -193,16 +211,41 @@ defmodule Dlex.Node do
     end
   end
 
+  defmacro relation(name, type, opts \\ []) do
+    quote do
+      Dlex.Node.__field__(
+        __MODULE__,
+        unquote(name),
+        if(unquote(type) == :many, do: :relations, else: :relation),
+        unquote(opts)
+        |> Enum.concat(if(unquote(type) == :many, do: [default: []], else: [default: nil])),
+        @depends_on
+      )
+    end
+  end
+
   @doc false
   def __field__(module, name, type, opts, depends_on) do
     schema_name = Module.get_attribute(module, :name)
-    Module.put_attribute(module, :fields_struct, {name, opts[:default]})
+
+    if Keyword.get(opts, :lang, false) do
+      Module.put_attribute(module, :fields_struct, {name, []})
+    else
+      Module.put_attribute(module, :fields_struct, {name, opts[:default]})
+    end
 
     unless opts[:virtual] do
       Module.put_attribute(module, :fields, name)
 
       {db_name, type, alter} = db_field(name, type, opts, schema_name, module, depends_on)
-      field = %Field{name: name, type: type, db_name: db_name, alter: alter, opts: opts}
+
+      field =
+        if Keyword.get(opts, :lang, false) do
+          %Field{name: name, type: :lang, db_name: db_name, alter: alter, opts: opts}
+        else
+          %Field{name: name, type: type, db_name: db_name, alter: alter, opts: opts}
+        end
+
       Module.put_attribute(module, :fields_data, field)
     end
   end
@@ -248,12 +291,16 @@ defmodule Dlex.Node do
     geo: "geo",
     datetime: "datetime",
     uid: "uid",
-    lang: "string"
+    lang: "string",
+    relation: "uid",
+    relations: "[uid]"
   ]
 
   for {type, dgraph_type} <- @types_mapping do
     defp db_type(unquote(type)), do: unquote(dgraph_type)
   end
+
+  defp db_type([:uid]), do: "[uid]"
 
   @ignore_keys [:default, :depends_on]
   defp gen_opt({key, _value}, _type) when key in @ignore_keys, do: []

@@ -15,6 +15,8 @@ defmodule Dlex.Utils do
     {Enum.reverse(list), counter}
   end
 
+  defp add_blank_ids(%Dlex.Lang{} = map, counter, _), do: {map, counter}
+
   defp add_blank_ids(map, counter, uid_key) when is_map(map) do
     map = Map.update(map, uid_key, "_:#{counter}", &(&1 || "_:#{counter}"))
     :maps.fold(&do_add_blank_ids(&1, &2, &3, uid_key), {%{}, counter + 1}, map)

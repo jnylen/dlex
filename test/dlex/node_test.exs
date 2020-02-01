@@ -1,7 +1,7 @@
 defmodule Dlex.NodeTest do
   use ExUnit.Case
 
-  alias Dlex.User
+  alias Dlex.{Ball, User, Team}
 
   describe "schema generation" do
     test "basic" do
@@ -39,6 +39,24 @@ defmodule Dlex.NodeTest do
     test "transformation callbacks" do
       assert "user.name" == User.__schema__(:field, :name)
       assert {:name, :string} == User.__schema__(:field, "user.name")
+    end
+  end
+
+  describe "does a changeset work" do
+    test "and is a simple changeset valid?" do
+      assert [] == Ball.changeset(%Ball{}, %{color: "Red"}).errors
+    end
+
+    test "and is the type changeset checked?" do
+      assert [{:color, {"is invalid", [type: :string, validation: :cast]}}] ==
+               Ball.changeset(%Ball{}, %{color: 12}).errors
+    end
+
+    test "with lang-tagged field?" do
+      assert [] ==
+               Team.changeset(%Team{}, %{
+                 text: [%Dlex.Lang{value: "text here", language: "en"}]
+               }).errors
     end
   end
 end
