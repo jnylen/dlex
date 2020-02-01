@@ -19,12 +19,13 @@ defmodule Dlex.Team do
 
   schema "team" do
     field :name, :string, index: ["term"]
+    field :text, :string, lang: true
     relation(:members, :many, models: [Dlex.User])
   end
 
   def changeset(team, params \\ %{}) do
     team
-    |> cast(params, [:name, :members])
+    |> cast(params, [:name, :members, :text])
     |> validate_relation(:members)
   end
 end
