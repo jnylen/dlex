@@ -96,12 +96,24 @@ defmodule Dlex.RepoTest do
                Team.changeset(%Team{}, %{name: "Louise", members: [owner, owner, team2, owner]}).errors
     end
 
-    test "does a changeset convert lang-tagged fields?" do
-      team = %Team{name: "hello there", text: [%Dlex.Lang{value: "text here", language: "en"}]}
+    test "does a reverse relation on team match the added relations?" do
+      owner = %User{name: "Alice", age: 25}
+      assert {:ok, %User{uid: user_uid} = owner} = TestRepo.set(owner)
+
+      team = %Team{name: "Mark", members: [owner]}
       assert {:ok, %Team{uid: team_uid} = team2} = TestRepo.set(team)
 
+      assert team = TestRepo.get(team_uid)
+
+      assert owner = TestRepo.get(user_uid)
+    end
+
+    test "does a changeset convert lang-tagged fields?" do
+      team = %Team{name: "hello there", text: [%Dlex.Lang{value: "text here", language: "en"}]}
+      assert {:ok, %Team{uid: team_uid} = team2} = TestRepo.set(team) |> IO.inspect()
+
       assert team_uid != nil
-      assert {:ok, %Team{uid: ^team_uid} = team3} = TestRepo.get(team_uid)
+      assert {:ok, %Team{uid: ^team_uid} = team3} = TestRepo.get(team_uid) |> IO.inspect()
 
       assert team2 == team3
     end
