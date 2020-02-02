@@ -1,6 +1,23 @@
 {:ok, _} = Application.ensure_all_started(:grpc)
 ExUnit.start()
 
+defmodule Dlex.Team do
+  use Dlex.Node
+  use Dlex.Changeset
+
+  schema "team" do
+    field :name, :string, index: ["term"]
+    field :text, :string, lang: true
+    relation(:members, :many, models: [Dlex.User], reverse: true)
+  end
+
+  def changeset(team, params \\ %{}) do
+    team
+    |> cast(params, [:name, :members, :text])
+    |> validate_relation(:members)
+  end
+end
+
 defmodule Dlex.User do
   use Dlex.Node
   use Dlex.Changeset
@@ -10,23 +27,7 @@ defmodule Dlex.User do
     field :age, :integer
     field :friends, :uid
     field :cache, :any, virtual: true
-  end
-end
-
-defmodule Dlex.Team do
-  use Dlex.Node
-  use Dlex.Changeset
-
-  schema "team" do
-    field :name, :string, index: ["term"]
-    field :text, :string, lang: true
-    relation(:members, :many, models: [Dlex.User])
-  end
-
-  def changeset(team, params \\ %{}) do
-    team
-    |> cast(params, [:name, :members, :text])
-    |> validate_relation(:members)
+    relation(:member_of, :reverse, model: Dlex.Team, name: :members)
   end
 end
 

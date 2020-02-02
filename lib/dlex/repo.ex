@@ -234,6 +234,8 @@ defmodule Dlex.Repo do
   Decode resulting map to a structure.
   """
   def decode(map, lookup, strict? \\ true) do
+    # map |> IO.inspect()
+
     {:ok, do_decode(map, lookup, strict?)}
   catch
     {:error, error} -> {:error, error}
@@ -306,8 +308,9 @@ defmodule Dlex.Repo do
     |> Map.put(key, [add | Map.get(map, key, [])] |> Enum.uniq())
   end
 
-  defp ecto_type?(:relations), do: {:array, :map}
   defp ecto_type?(:relation), do: :map
+  defp ecto_type?(:relations), do: {:array, :map}
+  defp ecto_type?(:reverse_relation), do: {:array, :map}
   defp ecto_type?(field_type), do: field_type
 
   def get_by(conn, field, name) do
