@@ -125,6 +125,9 @@ defmodule Dlex.Node do
         def __schema__(:type, unquote(name)), do: unquote(type)
       end
 
+      def __schema__(:field_types),
+        do: @fields_data |> Enum.map(fn field -> {field.name, field.db_name, field.type} end)
+
       for %Dlex.Field{name: name, db_name: db_name, type: type, opts: opts} <- @fields_data do
         def __schema__(:field, unquote(name)), do: unquote(db_name)
         def __schema__(:field, unquote(db_name)), do: {unquote(name), unquote(type)}

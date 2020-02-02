@@ -124,10 +124,10 @@ defmodule Dlex.RepoTest do
 
     test "does a changeset convert lang-tagged fields?" do
       team = %Team{name: "hello there", text: [%Dlex.Lang{value: "text here", language: "en"}]}
-      assert {:ok, %Team{uid: team_uid} = team2} = TestRepo.set(team) |> IO.inspect()
+      assert {:ok, %Team{uid: team_uid} = team2} = TestRepo.set(team)
 
       assert team_uid != nil
-      assert {:ok, %Team{uid: ^team_uid} = team3} = TestRepo.get(team_uid) |> IO.inspect()
+      assert {:ok, %Team{uid: ^team_uid} = team3} = TestRepo.get(team_uid)
 
       assert team2 == team3
     end
