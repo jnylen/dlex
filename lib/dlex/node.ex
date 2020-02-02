@@ -206,9 +206,13 @@ defmodule Dlex.Node do
       Dlex.Node.__field__(
         __MODULE__,
         unquote(name),
-        if(unquote(type) == :many, do: :relations, else: :relation),
+        case unquote(type) do
+          :one -> :relation
+          :many -> :relations
+          :reverse -> :reverse_relation
+        end,
         unquote(opts)
-        |> Enum.concat(if(unquote(type) == :many, do: [default: []], else: [default: nil])),
+        |> Enum.concat(if(unquote(type) == :one, do: [default: nil], else: [default: []])),
         @depends_on
       )
     end
@@ -228,6 +232,13 @@ defmodule Dlex.Node do
       Module.put_attribute(module, :fields, name)
 
       {db_name, type, alter} = db_field(name, type, opts, schema_name, module, depends_on)
+
+      db_name =
+        if type == :reverse_relation do
+          "~#{db_name}"
+        else
+          db_name
+        end
 
       field =
         if Keyword.get(opts, :lang, false) do
@@ -255,8 +266,14 @@ defmodule Dlex.Node do
         {field_name, depends_on.__schema__(:type, name), nil}
       end
     else
-      field_name = "#{schema_name}.#{name}"
-      {field_name, type, alter_field(field_name, type, opts)}
+      if type == :reverse_relation do
+        field_name = "#{opts[:model].__schema__(:source)}.#{Keyword.get(opts, :name, name)}"
+
+        {field_name, type, nil}
+      else
+        field_name = "#{schema_name}.#{name}"
+        {field_name, type, alter_field(field_name, type, opts)}
+      end
     end
   end
 

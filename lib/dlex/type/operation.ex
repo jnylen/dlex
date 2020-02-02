@@ -65,8 +65,13 @@ defmodule Dlex.Type.Operation do
 
   defp transform_type(%{"name" => name, "fields" => fields}) do
     fields_str =
-      Enum.map_join(fields, "\n", fn field ->
-        "#{field["name"]}: #{field["type"]}"
+      fields
+      |> Enum.map_join("\n", fn field ->
+        if field["type"] == "reverse_relation" do
+          "<#{field["name"]}>"
+        else
+          "#{field["name"]}: #{field["type"]}"
+        end
       end)
 
     """
@@ -75,6 +80,8 @@ defmodule Dlex.Type.Operation do
       }
     """
   end
+
+  defp transform_schema(%{"type" => "reverse_relation"}), do: ""
 
   defp transform_schema(%{"predicate" => predicate, "type" => type} = entry) do
     tokenizers = Map.get(entry, "tokenizer", [])
@@ -85,5 +92,4 @@ defmodule Dlex.Type.Operation do
 
   def render_key({"index", true}, tokenizers), do: "@index(#{Enum.join(tokenizers, ", ")})"
   def render_key({key, true}, _), do: "@#{key}"
-  def render_key({"models", _}, _), do: ""
 end
