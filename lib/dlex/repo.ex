@@ -191,6 +191,7 @@ defmodule Dlex.Repo do
     langs =
       Map.get(meta, :modules, [])
       |> Enum.map(&grab_all_langs/1)
+      |> Enum.uniq()
       |> Enum.join(" ")
       |> String.trim()
 
@@ -225,6 +226,7 @@ defmodule Dlex.Repo do
     langs =
       Map.get(meta, :modules, [])
       |> Enum.map(&grab_all_langs/1)
+      |> Enum.uniq()
       |> Enum.join(" ")
       |> String.trim()
 
@@ -250,7 +252,6 @@ defmodule Dlex.Repo do
     |> Enum.map(fn {_, field, _} ->
       "#{field}@*"
     end)
-    |> Enum.join(" ")
   end
 
   @doc """
