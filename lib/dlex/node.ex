@@ -273,7 +273,18 @@ defmodule Dlex.Node do
       end
     else
       if type == :reverse_relation do
-        field_name = "#{opts[:model].__schema__(:source)}.#{Keyword.get(opts, :name, name)}"
+        field_name =
+          cond do
+            Keyword.has_key?(opts, :model) && Keyword.has_key?(opts, :name) ->
+              opts[:model].__schema__(:field, string_to_atom(Keyword.get(opts, :name))) ||
+                "#{opts[:model].__schema__(:source)}.#{Keyword.get(opts, :name)}"
+
+            Keyword.has_key?(opts, :name) ->
+              Keyword.get(opts, :name)
+
+            true ->
+              name
+          end
 
         {field_name, type, nil}
       else
@@ -281,6 +292,15 @@ defmodule Dlex.Node do
         {field_name, type, alter_field(field_name, type, opts)}
       end
     end
+  end
+
+  defp string_to_atom(atom) when is_atom(atom), do: atom
+
+  defp string_to_atom(string) do
+    string
+    |> String.to_existing_atom()
+  rescue
+    _ -> nil
   end
 
   defp put_attribute_if_not_exists(module, key, value) do
@@ -306,7 +326,8 @@ defmodule Dlex.Node do
     uid: "uid",
     lang: "string",
     relation: "uid",
-    relations: "[uid]"
+    relations: "[uid]",
+    reverse_relation: "[uid]"
   ]
 
   for {type, dgraph_type} <- @types_mapping do
