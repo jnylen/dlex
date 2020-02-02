@@ -1,14 +1,14 @@
-defmodule Dlex.NodeTest do
+defmodule DlexTest.NodeTest do
   use ExUnit.Case
 
-  alias Dlex.{Ball, User, Team, Social}
+  alias DlexTest.{Ball, User, Team}
 
   describe "schema generation" do
     test "basic" do
       assert "user" == User.__schema__(:source)
       assert :string == User.__schema__(:type, :name)
       assert :integer == User.__schema__(:type, :age)
-      assert [:name, :age, :friends, :member_of] == User.__schema__(:fields)
+      assert [:name, :age, :friends, :facebook_id, :member_of] == User.__schema__(:fields)
     end
 
     test "alter" do
@@ -27,6 +27,7 @@ defmodule Dlex.NodeTest do
                  %{
                    "fields" => [
                      %{"name" => "~team.members", "type" => "reverse_relation"},
+                     %{"name" => "social.facebook_id", "type" => "string"},
                      %{"name" => "user.friends", "type" => "uid"},
                      %{"name" => "user.age", "type" => "integer"},
                      %{"name" => "user.name", "type" => "string"}
