@@ -70,7 +70,7 @@ defmodule Dlex.Type.Operation do
         if field["type"] == "reverse_relation" do
           "<#{field["name"]}>"
         else
-          "#{field["name"]}: #{field["type"]}"
+          field["name"]
         end
       end)
 
