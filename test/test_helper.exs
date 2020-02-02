@@ -1,6 +1,15 @@
 {:ok, _} = Application.ensure_all_started(:grpc)
 ExUnit.start()
 
+defmodule Dlex.Social do
+  use Dlex.Node
+  use Dlex.Changeset
+
+  shared "social" do
+    field :facebook_id, :string, index: ["term"]
+  end
+end
+
 defmodule Dlex.Team do
   use Dlex.Node
   use Dlex.Changeset
@@ -27,6 +36,7 @@ defmodule Dlex.User do
     field :age, :integer
     field :friends, :uid
     field :cache, :any, virtual: true
+    field :facebook_id, :string, depends_on: Dlex.Social
     relation(:member_of, :reverse, model: Dlex.Team, name: :members)
   end
 end
@@ -48,7 +58,7 @@ defmodule Dlex.Ball do
 end
 
 defmodule Dlex.TestRepo do
-  use Dlex.Repo, otp_app: :dlex, modules: [Dlex.User, Dlex.Team, Dlex.Ball]
+  use Dlex.Repo, otp_app: :dlex, modules: [Dlex.Social, Dlex.User, Dlex.Team, Dlex.Ball]
 end
 
 defmodule Dlex.TestHelper do
