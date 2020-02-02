@@ -1,11 +1,11 @@
 defmodule DlexTest do
   use ExUnit.Case
 
-  alias Dlex.TestHelper
+  alias DlexTest.Helper
 
   setup_all do
     # Setup our server
-    {:ok, pid} = Dlex.start_link([{:pool_size, 2} | TestHelper.opts()])
+    {:ok, pid} = Dlex.start_link([{:pool_size, 2} | Helper.opts()])
     Dlex.alter!(pid, %{drop_all: true})
 
     schema = """
