@@ -70,12 +70,12 @@ defmodule Dlex.Node do
     quote do
       @depends_on unquote(depends_on)
 
-      import Dlex.Node, only: [shared: 1, schema: 2]
+      import Dlex.Node, only: [shared: 1, shared: 2, schema: 2]
     end
   end
 
   defmacro schema(name, block) do
-    prepare = prepare_block(name, block)
+    prepare = prepare_block(name, block, :schema)
     postprocess = postprocess()
 
     quote do
@@ -85,7 +85,7 @@ defmodule Dlex.Node do
   end
 
   defmacro shared(block) do
-    prepare = prepare_block(nil, block)
+    prepare = prepare_block(nil, block, :shared)
     postprocess = postprocess()
 
     quote do
@@ -95,9 +95,22 @@ defmodule Dlex.Node do
     end
   end
 
-  defp prepare_block(name, block) do
+  defmacro shared(name, block) do
+    prepare = prepare_block(name, block, :shared)
+    postprocess = postprocess()
+
+    quote do
+      @depends_on __MODULE__
+      unquote(prepare)
+      unquote(postprocess)
+    end
+  end
+
+  defp prepare_block(name, block, schema_type) do
     quote do
       @name unquote(name)
+
+      Module.put_attribute(__MODULE__, :schema_type, unquote(schema_type))
       Module.register_attribute(__MODULE__, :fields, accumulate: true)
       Module.register_attribute(__MODULE__, :fields_struct, accumulate: true)
       Module.register_attribute(__MODULE__, :fields_data, accumulate: true)
@@ -155,12 +168,17 @@ defmodule Dlex.Node do
       |> Enum.flat_map(&List.wrap(&1.alter))
       |> Enum.reverse()
 
-    type_fields =
-      module
-      |> Module.get_attribute(:fields_data)
-      |> Enum.map(&into_type_field/1)
+    type =
+      if module |> Module.get_attribute(:schema_type) == :schema do
+        type_fields =
+          module
+          |> Module.get_attribute(:fields_data)
+          |> Enum.map(&into_type_field/1)
 
-    type = %{"name" => source, "fields" => type_fields}
+        %{"name" => source, "fields" => type_fields}
+      else
+        []
+      end
 
     %{
       "types" => List.wrap(type),
@@ -246,12 +264,12 @@ defmodule Dlex.Node do
       with {:error, error} <- Code.ensure_compiled(depends_on),
            do: raise("Module `#{depends_on}` not available, error: #{error}")
 
-      field_name = Atom.to_string(name)
+      field_name = [schema_name, Atom.to_string(name)] |> Enum.reject(&is_nil/1) |> Enum.join(".")
 
       if module == depends_on do
         {field_name, type, alter_field(field_name, type, opts)}
       else
-        {field_name, depends_on.__schema__(:type, name), nil}
+        {depends_on.__schema__(:field, name), depends_on.__schema__(:type, name), nil}
       end
     else
       if type == :reverse_relation do

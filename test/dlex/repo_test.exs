@@ -1,7 +1,7 @@
 defmodule Dlex.RepoTest do
   use ExUnit.Case
 
-  alias Dlex.{TestHelper, TestRepo, User, Team, Ball}
+  alias Dlex.{TestHelper, TestRepo, User, Team, Ball, Social}
 
   setup_all do
     {:ok, pid} = TestRepo.start_link(TestHelper.opts())
@@ -13,6 +13,7 @@ defmodule Dlex.RepoTest do
       TestRepo.register(Ball)
       TestRepo.register(User)
       TestRepo.register(Team)
+      TestRepo.register(Social)
       TestRepo.alter_schema()
       :ok
     end
