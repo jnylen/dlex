@@ -61,7 +61,40 @@ defmodule Dlex.Type.Mutation do
   defp format(:nquads, statement, _), do: statement
 
   defp format(:json, statement, json_lib),
-    do: json_lib.encode!(statement)
+    do: json_lib.encode!(statement |> transform_statement())
+
+  defp transform_statement(state) do
+    # IO.inspect(state)
+
+    state
+    |> Enum.map(fn {k, v} ->
+      {k, transform_value(v)}
+    end)
+
+    state
+    |> Enum.reduce(%{}, fn {k, v}, acc -> acc |> Map.put(k, transform_value(v)) end)
+
+    # |> IO.inspect()
+  end
+
+  defp transform_value(%{"uid" => uid} = val) do
+    if Regex.match?(~r/\:/, uid) do
+      val
+    else
+      %{"uid" => uid}
+    end
+  end
+
+  defp transform_value(%{uid: uid} = val) do
+    if Regex.match?(~r/\:/, uid) do
+      val
+    else
+      %{"uid" => uid}
+    end
+  end
+
+  defp transform_value(list) when is_list(list), do: list |> Enum.map(&transform_value/1)
+  defp transform_value(val), do: val
 
   defp mutation_key(:json, nil), do: :set_json
   defp mutation_key(:cond, nil), do: :cond
