@@ -131,6 +131,7 @@ defmodule Dlex.Node do
 
       def __schema__(:source), do: unquote(source)
       def __schema__(:fields), do: unquote(fields)
+      def __schema__(:fields_data), do: unquote(@fields_data)
       def __schema__(:alter), do: unquote(Macro.escape(alter))
       def __schema__(:depends_on), do: unquote(Dlex.Node.__depends_on_modules__(__MODULE__))
 
@@ -144,9 +145,6 @@ defmodule Dlex.Node do
       for %Dlex.Field{name: name, db_name: db_name, type: type, opts: opts} <- @fields_data do
         def __schema__(:field, unquote(name)), do: unquote(db_name)
         def __schema__(:field, unquote(db_name)), do: {unquote(name), unquote(type)}
-
-        def __schema__(:opts, unquote(name)),
-          do: unquote(opts)
 
         def __schema__(:models, unquote(name)),
           do: Keyword.get(unquote(opts), :models, [])
