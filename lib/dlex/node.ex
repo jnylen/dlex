@@ -131,7 +131,7 @@ defmodule Dlex.Node do
 
       def __schema__(:source), do: unquote(source)
       def __schema__(:fields), do: unquote(fields)
-      def __schema__(:fields_data), do: unquote(@fields_data)
+      def __schema__(:fields_data), do: @fields_data
       def __schema__(:alter), do: unquote(Macro.escape(alter))
       def __schema__(:depends_on), do: unquote(Dlex.Node.__depends_on_modules__(__MODULE__))
 
