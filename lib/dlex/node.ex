@@ -145,8 +145,8 @@ defmodule Dlex.Node do
         def __schema__(:field, unquote(name)), do: unquote(db_name)
         def __schema__(:field, unquote(db_name)), do: {unquote(name), unquote(type)}
 
-        def __schema__(:depends_on, unquote(name)),
-          do: Keyword.get(unquote(opts), :depends_on, [])
+        def __schema__(:opts, unquote(name)),
+          do: unquote(opts)
 
         def __schema__(:models, unquote(name)),
           do: Keyword.get(unquote(opts), :models, [])
