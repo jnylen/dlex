@@ -6,6 +6,7 @@ defmodule Dlex.MixProject do
       app: :dlex,
       version: "0.4.1",
       elixir: "~> 1.7",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
@@ -51,6 +52,9 @@ defmodule Dlex.MixProject do
       links: %{"Github" => "https://github.com/liveforeverx/dlex"}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/models"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp test_http(args) do
     env_run([{"DLEX_ADAPTER", "http"}], args)
