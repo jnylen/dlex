@@ -51,6 +51,8 @@ defmodule Dlex.Repo do
 
       def get(uid), do: Dlex.Repo.get(@name, meta(), uid)
       def get!(uid), do: Dlex.Repo.get!(@name, meta(), uid)
+      def get_raw(uid), do: Dlex.Repo.get_raw(@name, meta(), uid)
+      def get_raw!(uid), do: Dlex.Repo.get_raw!(@name, meta(), uid)
 
       def all(query), do: Dlex.Repo.all(@name, query, meta())
 
@@ -137,7 +139,8 @@ defmodule Dlex.Repo do
 
   defp encode_kv({_key, nil}, _), do: []
 
-  defp encode_kv({:uid, value}, struct), do: [{"uid", value}, {"dgraph.type", source(struct)}]
+  defp encode_kv({:uid, value}, struct),
+    do: [{"uid", value}, {"dgraph.type", source(struct)}]
 
   defp encode_kv({key, value}, struct) do
     case field(struct, key) do
@@ -185,12 +188,44 @@ defmodule Dlex.Repo do
   Get by uid
   """
   def get(conn, %{lookup: lookup}, uid) do
-    statement = ["{uid_get(func: uid(", uid, ")) {uid dgraph.type expand(_all_)}}"]
+    statement = [
+      "{uid_get(func: uid(",
+      uid,
+      ")) {uid dgraph.type expand(_all_) { uid dgraph.type expand(_all_)}}}"
+    ]
 
     with {:ok, %{"uid_get" => nodes}} <- Dlex.query(conn, statement) do
       case nodes do
         [%{"uid" => _} = map] when map_size(map) <= 2 -> {:ok, nil}
         [map] -> decode(map, lookup)
+      end
+    end
+  end
+
+  @doc """
+  The same as `get_raw/3`, but return result or raises.
+  """
+  def get_raw!(conn, meta, uid) do
+    case get_raw(conn, meta, uid) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  @doc """
+  Get an item by uid but doesn't turn it into a node
+  """
+  def get_raw(conn, _, uid) do
+    statement = [
+      "{uid_get(func: uid(",
+      uid,
+      ")) {uid dgraph.type expand(_all_) { uid dgraph.type expand(_all_)}}}"
+    ]
+
+    with {:ok, %{"uid_get" => nodes}} <- Dlex.query(conn, statement) do
+      case nodes do
+        [%{"uid" => _} = map] when map_size(map) <= 2 -> {:ok, nil}
+        [map] -> {:ok, map}
       end
     end
   end
@@ -249,7 +284,7 @@ defmodule Dlex.Repo do
   end
 
   defp do_decode_field(struct, {field_name, field_type}, value, lookup, strict?) do
-    case Ecto.Type.cast(field_type, value) do
+    case Ecto.Type.cast(ecto_type?(field_type), value) do
       {:ok, casted_value} -> Map.put(struct, field_name, do_decode(casted_value, lookup, strict?))
       {:error, error} -> throw({:error, error})
     end
@@ -263,6 +298,10 @@ defmodule Dlex.Repo do
     map
     |> Map.put(key, [add | Map.get(map, key, [])] |> Enum.uniq())
   end
+
+  defp ecto_type?(:relations), do: {:array, :map}
+  defp ecto_type?(:relation), do: :map
+  defp ecto_type?(field_type), do: field_type
 
   def get_by(conn, field, name) do
     statement = "query all($a: string) {all(func: eq(#{field}, $a)) {uid expand(_all_)}}"
