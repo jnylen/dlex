@@ -187,11 +187,17 @@ defmodule Dlex.Repo do
   @doc """
   Get by uid
   """
-  def get(conn, %{lookup: lookup}, uid) do
+  def get(conn, %{lookup: lookup} = meta, uid) do
+    langs =
+      Map.get(meta, :modules, [])
+      |> Enum.map(&grab_all_langs/1)
+      |> Enum.join(" ")
+      |> String.trim()
+
     statement = [
       "{uid_get(func: uid(",
       uid,
-      ")) {uid dgraph.type expand(_all_) { uid dgraph.type expand(_all_)}}}"
+      ")) {uid dgraph.type #{langs} expand(_all_) { uid dgraph.type #{langs} expand(_all_)}}}"
     ]
 
     with {:ok, %{"uid_get" => nodes}} <- Dlex.query(conn, statement) do
@@ -215,11 +221,17 @@ defmodule Dlex.Repo do
   @doc """
   Get an item by uid but doesn't turn it into a node
   """
-  def get_raw(conn, _, uid) do
+  def get_raw(conn, meta, uid) do
+    langs =
+      Map.get(meta, :modules, [])
+      |> Enum.map(&grab_all_langs/1)
+      |> Enum.join(" ")
+      |> String.trim()
+
     statement = [
       "{uid_get(func: uid(",
       uid,
-      ")) {uid dgraph.type expand(_all_) { uid dgraph.type expand(_all_)}}}"
+      ")) {uid dgraph.type #{langs} expand(_all_) { uid dgraph.type #{langs} expand(_all_)}}}"
     ]
 
     with {:ok, %{"uid_get" => nodes}} <- Dlex.query(conn, statement) do
@@ -228,6 +240,17 @@ defmodule Dlex.Repo do
         [map] -> {:ok, map}
       end
     end
+  end
+
+  def grab_all_langs(nil), do: ""
+
+  def grab_all_langs(model) do
+    model.__schema__(:field_types)
+    |> Enum.filter(fn {_, _, type} -> type == :lang end)
+    |> Enum.map(fn {_, field, _} ->
+      "#{field}@*"
+    end)
+    |> Enum.join(" ")
   end
 
   @doc """
