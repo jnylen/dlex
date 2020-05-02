@@ -8,7 +8,7 @@ defmodule Dlex.NodeTest do
       assert "user" == User.__schema__(:source)
       assert :string == User.__schema__(:type, :name)
       assert :integer == User.__schema__(:type, :age)
-      assert [:name, :age, :friends] == User.__schema__(:fields)
+      assert [:name, :age, :friends, :member_of] == User.__schema__(:fields)
     end
 
     test "alter" do
@@ -26,6 +26,7 @@ defmodule Dlex.NodeTest do
                "types" => [
                  %{
                    "fields" => [
+                     %{"name" => "~team.members", "type" => "reverse_relation"},
                      %{"name" => "user.friends", "type" => "uid"},
                      %{"name" => "user.age", "type" => "integer"},
                      %{"name" => "user.name", "type" => "string"}

@@ -252,7 +252,9 @@ defmodule Dlex.Node do
       end
     else
       if type == :reverse_relation do
-        {opts[:model].__schema__(:field, name), type, nil}
+        field_name = "#{opts[:model].__schema__(:source)}.#{Keyword.get(opts, :name, name)}"
+
+        {field_name, type, nil}
       else
         field_name = "#{schema_name}.#{name}"
         {field_name, type, alter_field(field_name, type, opts)}
