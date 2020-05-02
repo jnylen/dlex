@@ -36,11 +36,10 @@ defmodule Dlex.RepoTest do
       assert {:ok, %User{uid: user_uid} = inserted_user} = TestRepo.set(user)
 
       team = %Team{name: "Mark", members: [inserted_user]}
-      # |> IO.inspect()
+
       assert {:ok, %Team{uid: team_uid}} = TestRepo.set(team)
       assert team_uid != nil
 
-      # |> IO.inspect()
       assert {:ok, %Team{uid: ^team_uid, name: "Mark", members: [^inserted_user]}} =
                TestRepo.get(team_uid)
     end
@@ -52,8 +51,7 @@ defmodule Dlex.RepoTest do
       ball = %Ball{color: "Red", owner: owner}
       assert {:ok, %Ball{uid: ball_uid}} = TestRepo.set(ball)
 
-      assert {:ok, %Ball{color: "Red", owner: ^owner, uid: ^ball_uid}} =
-               TestRepo.get(ball_uid) |> IO.inspect()
+      assert {:ok, %Ball{color: "Red", owner: ^owner, uid: ^ball_uid}} = TestRepo.get(ball_uid)
     end
 
     test "does a changeset return valid with a relation?" do
@@ -96,6 +94,16 @@ defmodule Dlex.RepoTest do
 
       assert [members: {"not in one of the allowed models", []}] ==
                Team.changeset(%Team{}, %{name: "Louise", members: [owner, owner, team2, owner]}).errors
+    end
+
+    test "does a changeset convert lang-tagged fields?" do
+      team = %Team{name: "hello there", text: [%Dlex.Lang{value: "text here", language: "en"}]}
+      assert {:ok, %Team{uid: team_uid} = team2} = TestRepo.set(team)
+
+      assert team_uid != nil
+      assert {:ok, %Team{uid: ^team_uid} = team3} = TestRepo.get(team_uid)
+
+      assert team2 == team3
     end
   end
 end

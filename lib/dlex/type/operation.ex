@@ -45,9 +45,9 @@ defmodule Dlex.Type.Operation do
     encoded_types = encode_types(schemas["types"])
 
     """
-      #{encoded_types}
+    #{encoded_preds}
 
-      #{encoded_preds}
+    #{encoded_types}
     """
   end
 
