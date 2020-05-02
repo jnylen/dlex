@@ -1,7 +1,7 @@
 defmodule Dlex.NodeTest do
   use ExUnit.Case
 
-  alias Dlex.{Ball, User}
+  alias Dlex.{Ball, User, Team, Social}
 
   describe "schema generation" do
     test "basic" do
