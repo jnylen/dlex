@@ -194,6 +194,9 @@ defmodule Dlex.Node do
     }
   end
 
+  defp atom_to_string(:lang), do: "string"
+  defp atom_to_string(:relation), do: "uid"
+  defp atom_to_string(:relations), do: "[uid]"
   defp atom_to_string([:uid]), do: "[uid]"
   defp atom_to_string(atom), do: atom |> Atom.to_string()
 
@@ -211,6 +214,7 @@ defmodule Dlex.Node do
   defp ecto_type(:datetime), do: :utc_datetime
   defp ecto_type(:relation), do: :map
   defp ecto_type(:relations), do: {:array, :map}
+  defp ecto_type(:lang), do: {:array, :map}
   defp ecto_type(type), do: type
 
   defmacro field(name, type, opts \\ []) do
@@ -239,7 +243,12 @@ defmodule Dlex.Node do
   @doc false
   def __field__(module, name, type, opts, depends_on) do
     schema_name = Module.get_attribute(module, :name)
-    Module.put_attribute(module, :fields_struct, {name, opts[:default]})
+    
+    if Keyword.get(opts, :lang, false) do
+      Module.put_attribute(module, :fields_struct, {name, []})
+    else
+      Module.put_attribute(module, :fields_struct, {name, opts[:default]})
+    end
 
     unless opts[:virtual] do
       Module.put_attribute(module, :fields, name)
@@ -253,7 +262,12 @@ defmodule Dlex.Node do
           db_name
         end
 
-      field = %Field{name: name, type: type, db_name: db_name, alter: alter, opts: opts}
+      field =
+        if Keyword.get(opts, :lang, false) do
+          %Field{name: name, type: :lang, db_name: db_name, alter: alter, opts: opts}
+        else
+          %Field{name: name, type: type, db_name: db_name, alter: alter, opts: opts}
+        end
       Module.put_attribute(module, :fields_data, field)
     end
   end

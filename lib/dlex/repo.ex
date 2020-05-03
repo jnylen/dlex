@@ -329,7 +329,7 @@ defmodule Dlex.Repo do
 
   defp into_lang_struct(value, language), do: %Dlex.Lang{language: language, value: value}
 
-  defp merge_list(map, key, add) do
+  defp merge_list(map, key, add \\ []) do
     map
     |> Map.put(key, [add | Map.get(map, key, [])] |> Enum.uniq())
   end
