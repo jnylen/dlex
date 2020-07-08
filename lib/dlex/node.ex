@@ -213,8 +213,8 @@ defmodule Dlex.Node do
 
   defp ecto_type(:datetime), do: :utc_datetime
   defp ecto_type(:relation), do: :map
-  defp ecto_type(:relations), do: {:array, :map}
-  defp ecto_type(:lang), do: {:array, :map}
+  defp ecto_type(:relations), do: {:array, :any}
+  defp ecto_type(:lang), do: {:embed, %Ecto.Embedded{cardinality: :many, on_cast: &Dlex.Lang.changeset/2, related: Dlex.Lang}}
   defp ecto_type(type), do: type
 
   defmacro field(name, type, opts \\ []) do
