@@ -276,8 +276,6 @@ defmodule Dlex.Repo do
   Decode resulting map to a structure.
   """
   def decode(map, lookup, strict? \\ true) do
-    # map
-
     {:ok, do_decode(map, lookup, strict?)}
   catch
     {:error, error} -> {:error, error}
@@ -321,7 +319,12 @@ defmodule Dlex.Repo do
   defp lang?(_, original, type), do: field(type, original)
 
   defp do_decode_field(struct, {{key, _}, lang}, value, _lookup, _strict?) do
-    case Ecto.Type.cast(:string, value) do
+    is_list(value)
+    |> case do
+      true -> Ecto.Type.cast(:string, List.first(value))
+      false -> Ecto.Type.cast(:string, value)
+    end
+    |> case do
       {:ok, casted_value} ->
         merge_list(
           struct,
