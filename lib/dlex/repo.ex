@@ -149,6 +149,12 @@ defmodule Dlex.Repo do
 
       string_key ->
         case type(struct, key) do
+          :relation ->
+            [{string_key, value |> from_relation()}]
+
+          :relations ->
+            [{string_key, value |> Enum.map(&from_relation/1)}]
+
           :lang ->
             value |> from_lang(string_key)
 
@@ -165,6 +171,16 @@ defmodule Dlex.Repo do
        when is_bitstring(value) and is_bitstring(language) do
     [{"#{key}@#{language}", value}]
   end
+
+  defp from_lang(%Ecto.Changeset{action: action} = changeset, key) do
+    {:ok, struct} = Ecto.Changeset.apply_action(changeset, action)
+
+    struct
+    |> from_lang(key)
+  end
+
+  defp from_relation(val) when is_binary(val), do: %{uid: val}
+  defp from_relation(val), do: val
 
   @compile {:inline, field: 2}
   def field(_struct, "uid"), do: {:uid, :string}
@@ -204,7 +220,7 @@ defmodule Dlex.Repo do
 
     with {:ok, %{"uid_get" => nodes}} <- Dlex.query(conn, statement) do
       case nodes do
-        [%{"uid" => _} = map] when map_size(map) <= 2 -> {:ok, nil}
+        [%{"uid" => _, "dgraph.type" => types} = map] when map_size(map) < 2 and types != [] -> {:ok, nil}
         [map] -> decode(map, lookup)
       end
     end
@@ -260,8 +276,6 @@ defmodule Dlex.Repo do
   Decode resulting map to a structure.
   """
   def decode(map, lookup, strict? \\ true) do
-    # map |> IO.inspect()
-
     {:ok, do_decode(map, lookup, strict?)}
   catch
     {:error, error} -> {:error, error}
@@ -305,7 +319,12 @@ defmodule Dlex.Repo do
   defp lang?(_, original, type), do: field(type, original)
 
   defp do_decode_field(struct, {{key, _}, lang}, value, _lookup, _strict?) do
-    case Ecto.Type.cast(:string, value) do
+    is_list(value)
+    |> case do
+      true -> Ecto.Type.cast(:string, List.first(value))
+      false -> Ecto.Type.cast(:string, value)
+    end
+    |> case do
       {:ok, casted_value} ->
         merge_list(
           struct,
@@ -335,7 +354,7 @@ defmodule Dlex.Repo do
   end
 
   defp ecto_type?(:relation), do: :map
-  defp ecto_type?(:relations), do: {:array, :map}
+  defp ecto_type?(:relations), do: {:array, :any}
   defp ecto_type?(:reverse_relation), do: {:array, :map}
   defp ecto_type?(field_type), do: field_type
 
