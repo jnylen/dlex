@@ -218,7 +218,12 @@ defmodule Dlex.Node do
   defp ecto_type(:lang),
     do:
       {:embed,
-       %Ecto.Embedded{cardinality: :many, on_cast: &Dlex.Lang.changeset/2, related: Dlex.Lang}}
+       %Ecto.Embedded{
+         cardinality: :many,
+         on_replace: :update,
+         on_cast: &Dlex.Lang.changeset/2,
+         related: Dlex.Lang
+       }}
 
   defp ecto_type(type), do: type
 
