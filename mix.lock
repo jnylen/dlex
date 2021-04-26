@@ -1,5 +1,5 @@
 %{
-  "castore": {:hex, :castore, "0.1.9", "eb08a94c12ebff92a92d844c6ccd90728dc7662aab9bdc8b3b785ba653c499d5", [:mix], [], "hexpm", "99c3a38ad9c0bab03fee1418c98390da1a31f3b85e317db5840d51a1443d26c8"},
+  "castore": {:hex, :castore, "0.1.10", "b01a007416a0ae4188e70b3b306236021b16c11474038ead7aff79dd75538c23", [:mix], [], "hexpm", "a48314e0cb45682db2ea27b8ebfa11bd6fa0a6e21a65e5772ad83ca136ff2665"},
   "connection": {:hex, :connection, "1.1.0", "ff2a49c4b75b6fb3e674bfc5536451607270aac754ffd1bdfe175abe4a6d7a68", [:mix], [], "hexpm", "722c1eb0a418fbe91ba7bd59a47e28008a189d47e37e0e7bb85585a016b2869c"},
   "cowboy": {:hex, :cowboy, "2.5.0", "4ef3ae066ee10fe01ea3272edc8f024347a0d3eb95f6fbb9aed556dacbfc1337", [:rebar3], [{:cowlib, "~> 2.6.0", [hex: :cowlib, repo: "hexpm", optional: false]}, {:ranch, "~> 1.6.2", [hex: :ranch, repo: "hexpm", optional: false]}], "hexpm", "07763d253314bd76017157e3a33e2cd32c1500e0ecf7ceb4e80aa09d2939aa30"},
   "cowlib": {:hex, :cowlib, "2.6.0", "8aa629f81a0fc189f261dc98a42243fa842625feea3c7ec56c48f4ccdb55490f", [:rebar3], [], "hexpm", "45a1a08e05e4c66f2af665295955e337d52c2d33b1f1cf24d353cadeddf34992"},
