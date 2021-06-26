@@ -215,13 +215,18 @@ defmodule Dlex.Repo do
     statement = [
       "{uid_get(func: uid(",
       uid,
-      ")) {uid dgraph.type #{langs} expand(_all_) { uid dgraph.type #{langs} expand(_all_)}}}"
+      ")) {uid dgraph.type #{langs} expand(_all_) { uid dgraph.type #{langs} expand(_all_) { uid dgraph.type #{
+        langs
+      } expand(_all_)}}}}"
     ]
 
     with {:ok, %{"uid_get" => nodes}} <- Dlex.query(conn, statement) do
       case nodes do
-        [%{"uid" => _, "dgraph.type" => types} = map] when map_size(map) < 2 and types != [] -> {:ok, nil}
-        [map] -> decode(map, lookup)
+        [%{"uid" => _, "dgraph.type" => types} = map] when map_size(map) < 2 and types != [] ->
+          {:ok, nil}
+
+        [map] ->
+          decode(map, lookup)
       end
     end
   end
